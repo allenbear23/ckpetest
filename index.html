@@ -212,8 +212,16 @@ function renderCurrentQuestion() {
       <label><input type="radio" name="cur_q" value="X"> (X) 非</label>
     `;
   } else {
-    q.options.forEach((opt, j) => {
-      html += `<label><input type="radio" name="cur_q" value="${j}"> ${opt}</label>`;
+    let opts = q.options.map((opt, j) => {
+      let stripped = opt.replace(/^\([A-D]\)\s*/, '').replace(/^[A-D]\.\s*/, '');
+      return { text: stripped, isCorrect: j === q.a };
+    });
+    for (let i = opts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+    opts.forEach(opt => {
+      html += `<label><input type="radio" name="cur_q" value="${opt.isCorrect ? 'true' : 'false'}"> ${opt.text}</label>`;
     });
   }
   html += `</div>`;
@@ -244,8 +252,8 @@ function submitCurrentQuestion() {
     isCorrect = (userAns === q.a);
     correctAnsText = (q.a === 'O') ? '(O) 是' : '(X) 非';
   } else {
-    isCorrect = (parseInt(userAns) === q.a);
-    correctAnsText = q.options[q.a];
+    isCorrect = (userAns === 'true');
+    correctAnsText = q.options[q.a].replace(/^\([A-D]\)\s*/, '').replace(/^[A-D]\.\s*/, '');
   }
   
   const resBox = document.getElementById('quiz-result');
@@ -326,7 +334,8 @@ function loadMistakes() {
   mistakes.forEach((m, i) => {
     let opts = '';
     if (m.type === 'mc') {
-      opts = '<div style="margin-top:10px;">' + m.options.map(o => `<div>${o}</div>`).join('') + '</div>';
+      let strippedOpts = m.options.map(o => o.replace(/^\([A-D]\)\s*/, '').replace(/^[A-D]\.\s*/, ''));
+      opts = '<div style="margin-top:10px;">' + strippedOpts.map(o => `<div>- ${o}</div>`).join('') + '</div>';
     }
     html += `
       <div class="mistake-item">
